@@ -15,7 +15,7 @@ setup(name='storjalytics-client',
       url='https://wwwgit.jamescoyle.net/james.coyle/storjalytics-client',
       install_requires=[
             'requests==2.18.4',
-            'python-crontab==2.2.5'
+            'python-crontab==2.2.8'
       ],
       entry_points={
           'console_scripts': [
