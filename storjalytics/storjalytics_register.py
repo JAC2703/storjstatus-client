@@ -13,13 +13,15 @@ from os import scandir
 CONFIGFILE = '/etc/storjalytics/config.json'
 APIENDPOINT = 'http://localhost:8080/api/'
 PARSER = None
+ENV = None
 
 def init_register():
     global APIENDPOINT
     global PARSER
 
-    checks()
+    storjalytics_common.setup_env()
     header()
+    checks()
     cmdargs()
 
     args = PARSER.parse_args()
@@ -82,6 +84,8 @@ def init_register():
 
 
 def checks():
+    global CONFIGFILE
+
     if os.geteuid() != 0:
         print('Please run this script with root privileges')
         exit(1)
@@ -90,12 +94,16 @@ def checks():
         print('Server config file already exists')
         exit(1)
 
+    storjalytics_common.check_strojshare()
+
+
 def header():
     print('####################################################')
-    print('#           StorjAlytics Server Registration       #')
+    print('#         StorjAlytics Server Registration         #')
     print('#    Written by James Coyle (www.jamescoyle.net)   #')
     print('####################################################')
     print()
+
 
 def cmdargs():
     global PARSER
@@ -105,6 +113,7 @@ def cmdargs():
     PARSER.add_argument('--password', '-p', help="Your StorjAlytics password", type=str, action='store', dest='arg_password', nargs='?')
     PARSER.add_argument('--server-name', '-n', help="Name for this server to use in the dashboard", type=str, action='store', dest='arg_name', nargs='?')
     PARSER.add_argument('--config-dir', '-c', help="The location to your local Storjshare config file", type=str, action='store', dest='arg_config_dir', nargs='?')
+
 
 def save_settings(api_key, api_secret, server_guid, storj_config):
     global CONFIGFILE
@@ -132,6 +141,7 @@ def save_settings(api_key, api_secret, server_guid, storj_config):
     settings_file.write(settings_output)
     settings_file.close()
 
+
 def api_creds(email, password):
     json_request = {
         'email': email,
@@ -149,6 +159,7 @@ def api_creds(email, password):
 
     return key, secret
 
+
 def server_guid(key, secret, name):
     json_request = {
         'name': name
@@ -165,11 +176,40 @@ def server_guid(key, secret, name):
 
     return serverid
 
-def print_error(error_message):
+
+def cron_job():
+    result = storjalytics_common.subprocess_result(['which', 'storjalytics-send'])
+
+    if 'storjalytics-send' in result[0].decode('utf-8'):
+        send_command = results[0].decode('utf-8').replace('\n', '') + ' >> /var/log/storjalytics.log 2>&1'
+
+        cron = CronTab(tabfile='/etc/crontab', user=False)
+        # Check for existing cronjob and remove
+        cron.remove(comment='storjalytics')
+
+        # Add new cron
+        job = cron.new(command=send_command, user='root', comment='storjalytics')
+        minute = randint(0, 59)
+        job.minute.on(minute)
+
+        try:
+            system_cron.write()
+            storjalytics_common.subprocess_result(['service', 'cron', 'reload'])
+        except PermissionError:
+            print_error('Unable to create cron job. Exiting.')
+
+    else:
+        print_error('There was an error finding the storjalytics-send command. Check your storjalytics installation.')
+
+
+def print_error(error_message, show_help=true):
     print()
     print("ERROR : " + error_message)
     print()
-    PARSER.print_help()
+
+    if show_help:
+        PARSER.print_help()
+
     exit(1)
 
 if __name__ == '__main__':
