@@ -8,6 +8,7 @@ import requests
 import subprocess
 from crontab import CronTab
 from os import scandir
+from storjalytics import storjalytics_common
 
 ### Vars
 CONFIGFILE = '/etc/storjalytics/config.json'
@@ -19,13 +20,49 @@ STORJCONFIG = None
 
 def init_send():
 
+    checks();
+
     load_settings()
 
-    storj_cmd = storjalytics_common.check_strojshare()
+    storj_json = storjshare_json()
+    conf_json = config_json()
 
-    result = subprocess_result(['storjshare', 'status'])
 
+
+
+def checks():
+    global CONFIGFILE
+
+    if os.geteuid() != 0:
+        print_error('Please run this script with root privileges')
+
+    if not os.path.isfile(CONFIGFILE):
+        print_error('Server config file does not exist at ' + CONFIGFILE)
+        exit(1)
+
+    # Check strojshare exists
+    code, result = storjalytics_common.check_strojshare()
+
+    if code != "OK":
+        print_error(result, False)
+
+
+def storjshare_json():
+    result_data = subprocess_result(['storjshare', 'status', '--json'])
+    result_json = json.loads(result_data)
+
+    return result_json
+
+def config_json():
     configs = os.scandir(STORJCONFIG)
+
+    for f in configs:
+        if f.is_file():
+            # consume config file
+
+
+    return result_json
+
 
 def load_settings():
     global CONFIGFILE

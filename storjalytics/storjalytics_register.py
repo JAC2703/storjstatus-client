@@ -5,26 +5,33 @@ import getpass
 import json
 import os
 import requests
-import subprocess
+import socket
 from crontab import CronTab
 from os import scandir
+from storjalytics import storjalytics_common
 
 ### Vars
 CONFIGFILE = '/etc/storjalytics/config.json'
 APIENDPOINT = 'http://localhost:8080/api/'
+FORCE = False
 PARSER = None
 ENV = None
 
 def init_register():
     global APIENDPOINT
+    global FORCE
     global PARSER
 
     storjalytics_common.setup_env()
     header()
-    checks()
     cmdargs()
 
     args = PARSER.parse_args()
+
+    if args.arg_force:
+        FORCE = True;
+
+    checks()
 
     if not args.arg_email:
         email = input('Enter your StorjAlytics email address: ')
@@ -39,7 +46,8 @@ def init_register():
         print('Using password : ****')
 
     if not args.arg_name:
-        name = input('Enter a description for this server (min 3 characters): ')
+        name = input('Enter a name for this server (min 3 characters) [' + print(socket.gethostname()) + ']: ')
+        name = name or print(socket.gethostname())
     else:
         name = args.arg_name
         print('Using server name :' + name)
@@ -85,16 +93,23 @@ def init_register():
 
 def checks():
     global CONFIGFILE
+    global FORCE
 
     if os.geteuid() != 0:
-        print('Please run this script with root privileges')
+        print_error('Please run this script with root privileges')
+
+    if FORCE == True:
+        print("Forcing regeneration of config and crontab. Note cron times may change.")
+
+    elif os.path.isfile(CONFIGFILE):
+        print_error('Server config file already exists')
         exit(1)
 
-    if os.path.isfile(CONFIGFILE):
-        print('Server config file already exists')
-        exit(1)
+    # Check strojshare exists
+    code, result = storjalytics_common.check_strojshare()
 
-    storjalytics_common.check_strojshare()
+    if code != "OK":
+        print_error(result, False)
 
 
 def header():
@@ -113,6 +128,7 @@ def cmdargs():
     PARSER.add_argument('--password', '-p', help="Your StorjAlytics password", type=str, action='store', dest='arg_password', nargs='?')
     PARSER.add_argument('--server-name', '-n', help="Name for this server to use in the dashboard", type=str, action='store', dest='arg_name', nargs='?')
     PARSER.add_argument('--config-dir', '-c', help="The location to your local Storjshare config file", type=str, action='store', dest='arg_config_dir', nargs='?')
+    PARSER.add_argument('--force', '-f', help="This will regenerate the cron and config file if it already exists", action='store_true', dest='arg_force')
 
 
 def save_settings(api_key, api_secret, server_guid, storj_config):
@@ -202,7 +218,7 @@ def cron_job():
         print_error('There was an error finding the storjalytics-send command. Check your storjalytics installation.')
 
 
-def print_error(error_message, show_help=true):
+def print_error(error_message, show_help=True):
     print()
     print("ERROR : " + error_message)
     print()
@@ -211,6 +227,7 @@ def print_error(error_message, show_help=true):
         PARSER.print_help()
 
     exit(1)
+
 
 if __name__ == '__main__':
     init_register()

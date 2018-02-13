@@ -1,3 +1,5 @@
+import os
+import subprocess
 
 def setup_env():
     global ENV
@@ -14,12 +16,12 @@ def check_strojshare():
             print("Found Storjshare : " + result)
 
         except FileNotFoundError:
-            print_error("Unable to find storjshare binary in PATH")
+            return "fail", "Unable to find storjshare binary in PATH"
 
     else:
-        print_error("Unable to find storjshare binary in PATH")
+        return "fail", "Unable to find storjshare binary in PATH"
 
-    return result[0].decode('utf-8').strip()
+    return "OK", result[0].decode('utf-8').strip()
 
 
 def subprocess_result(args):
