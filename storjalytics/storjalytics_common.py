@@ -17,7 +17,7 @@ def check_strojshare():
     if 'storjshare' in result[0].decode('utf-8'):
         try:
             result = subprocess_result(['storjshare', '-V'])
-            print("Found Storjshare : " + result)
+            print("Found Storjshare : " + result[0].decode('utf-8').strip())
 
         except FileNotFoundError:
             return "fail", "Unable to find storjshare binary in PATH"
