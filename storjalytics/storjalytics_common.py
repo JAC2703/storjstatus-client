@@ -3,7 +3,7 @@ import subprocess
 
 VERSION = '0.1.0'
 CONFIGFILE = '/etc/storjalytics/config.json'
-APIENDPOINT = 'http://localhost:8080/api/'
+APIENDPOINT = 'https://storjapi-test.jamescoyle.net/api/'
 
 def setup_env():
     global ENV
