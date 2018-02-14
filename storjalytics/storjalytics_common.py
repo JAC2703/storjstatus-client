@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 
 VERSION = '0.1.0'
@@ -10,6 +11,13 @@ def setup_env():
 
     ENV = os.environ
     ENV['PATH'] = ENV.get('PATH') + ':/usr/local/bin:/usr/bin/'
+
+
+def cleanup_json(json):
+    json = re.sub(r'(?<!https:)//.*', '', json, flags = re.MULTILINE)
+    json = json.strip().replace('\r', '').replace('\n', '')
+
+    return json
 
 
 def check_strojshare():

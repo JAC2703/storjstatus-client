@@ -19,6 +19,8 @@ SERVERGUID = None
 STORJCONFIG = None
 
 def init_send():
+    
+    storjalytics_common.setup_env()
 
     checks();
 
@@ -31,6 +33,8 @@ def init_send():
 
     for node in storj_json:
         # Get values from bridge
+        print("Processing nodeid: " + node['id'])
+        
         bridge_json = bridge_info(node['id'])
 
         json_node = {
@@ -45,10 +49,10 @@ def init_send():
             'bridgeConnectionStatus': node['bridgeConnectionStatus'],
             'reputation': bridge_json['reputation'],
             'responseTime': bridge_json['responseTime'],
-            'rpcAddress': conf_json[node[configPath]]['rpcAddress'],
-            'rpcPort': conf_json[node[configPath]]['rpcPort'],
-            'storagePath': conf_json[node.configPath]['storagePath'],
-            'storageAllocation': conf_json[node[configPath]]['storageAllocation']
+            'rpcAddress': conf_json[node['configPath']]['rpcAddress'],
+            'rpcPort': conf_json[node['configPath']]['rpcPort'],
+            #'storagePath': conf_json[node['configPath']]['storagePath'],
+            'storageAllocation': conf_json[node['configPath']]['storageAllocation']
         }
         json_nodes.append(json_node)
 
@@ -59,11 +63,16 @@ def init_send():
         'storjshareVersion': storjshare_version(),
         'nodes': json_nodes
     }
-
+    print(json_request)
     headers = {'content-type': 'application/json', 'api-key' : APIKEY, 'api-secret' : APISECRET}
-    resp = requests.post(storjalytics_common.APIENDPOINT + "stats", json=json_request, headers=headers)
-    if not resp.status_code == 200:
-        print_error("Value returned when posting stats : " + resp.json()['description'], False)
+    try:
+        resp = requests.post(storjalytics_common.APIENDPOINT + "stats", json=json_request, headers=headers)
+        if not resp.status_code == 200:
+            print_error("Value returned when posting stats : " + resp.json()['description'], False)
+    except Exception as e:
+        print(str(e))
+        print_error("Error sending report to: " + storjalytics_common.APIENDPOINT + "stats. Please try again later")
+        
 
 
 def checks():
@@ -82,8 +91,8 @@ def checks():
 
 
 def storjshare_version():
-    result_data = subprocess_result(['storjshare', '-V'])
-    re_match = re.match( r"daemon: ([0-9\.]+), core: ([0-9\.]+), protocol: ([0-9\.]+)", result_data)
+    result_data = storjalytics_common.subprocess_result(['storjshare', '-V'])
+    re_match = re.match( r"daemon: ([0-9\.]+), core: ([0-9\.]+), protocol: ([0-9\.]+)", result_data[0].decode('utf-8'))
     if re_match:
         result = {
             'daemon': re_match.group(1),
@@ -101,36 +110,47 @@ def bridge_info(id):
     if not resp.status_code == 200:
         print_error("Code returned when querying bridge : " + rstatus_code, False)
 
-    return resp
+    return json.loads(resp.content.decode('utf-8'))
+
 
 def storjshare_json():
-    result_data = subprocess_result(['storjshare', 'status', '--json'])
-    result_json = json.loads(result_data)
+    result_data = storjalytics_common.subprocess_result(['storjshare', 'status', '--json'])
 
-    return result_json
+    return json.loads(result_data[0].decode('utf-8')) #result_json
+
 
 def config_json():
     configs = os.scandir(STORJCONFIG)
-    nodes = []
+    nodes = {}
 
-    for f in configs:
-        if f.is_file():
+    for root, dirs, filenames in os.walk(STORJCONFIG):
+        for f in filenames:
             # consume config file
-            with open(r, 'r') as f_open:
+            with open(os.path.join(root, f), 'r') as f_open:
+                print("Parsing config file: " + os.path.join(root, f))
+                node = {}
+                f_data = f_open.read()
+                f_clean = storjalytics_common.cleanup_json(f_data)
+         
                 try:
-                    f_json = json.load(f_open)
+                    f_json = json.loads(f_clean)
 
                     node['rpcAddress'] = f_json['rpcAddress']
                     node['rpcPort'] = f_json['rpcPort']
                     node['storagePath'] = f_json['storagePath']
                     node['storageAllocation'] = f_json['storageAllocation']
 
-                    nodes[f_json['storageAllocation']] = node
-                    print("Found valid config for " + f_json['storageAllocation'])
+                    nodes[f_json['storagePath']] = node
+                    print("Found valid config for " + f_json['storagePath'])
+                except KeyError:
+                    print('JSON config file ' + f + ' invalid. Please check your config.')
+                except json.JSONDecodeError:
+                    print('JSON config file ' + f + ' invalid. Please check your config.')
                 except:
                     print("File " + f + " is not a valid Storjshare JSON config file")
 
     return nodes
+
 
 
 def load_settings():
@@ -144,10 +164,10 @@ def load_settings():
         settings_data = settings_file.read()
         settings_json = json.loads(settings_data)
 
-        APIKEY = settings['api_key']
-        APISECRET = settings['api_secret']
-        SERVERGUID = settings['server_guid']
-        STORJCONFIG = settings['storj_config']
+        APIKEY = settings_json['api_key']
+        APISECRET = settings_json['api_secret']
+        SERVERGUID = settings_json['server_guid']
+        STORJCONFIG = settings_json['storj_config']
 
     except KeyError:
         error_message('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
