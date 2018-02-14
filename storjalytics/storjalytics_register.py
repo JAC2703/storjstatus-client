@@ -43,14 +43,15 @@ def init_register():
         print('Using password : ****')
 
     if not args.arg_name:
-        name = input('Enter a name for this server (min 3 characters) [' + socket.gethostname() + ']: ')
-        name = name or socket.gethostname()
+        name = input('Enter a name for this server (min 3 characters) [' + guess_hostname() + ']: ')
+        name = name or guess_hostname()
     else:
         name = args.arg_name
         print('Using server name :' + name)
 
     if not args.arg_config_dir:
-        config_dir = input('Enter your Storjshare config directory (eg. /users/storj/.config/storjshare/configs): ')
+        config_dir = input('Enter your Storjshare config directory [' + guess_config_dir() + ']: ')
+        config_dif = config_dir or guess_config_dir()
     else:
         config_dir = args.arg_config_dir
         print('Using config directory :' + config_dir)
@@ -126,6 +127,18 @@ def cmdargs():
     PARSER.add_argument('--config-dir', '-c', help="The location to your local Storjshare config file", type=str, action='store', dest='arg_config_dir', nargs='?')
     PARSER.add_argument('--force', '-f', help="This will regenerate the cron and config file if it already exists", action='store_true', dest='arg_force')
 
+
+def guess_config_dir():
+    user = getpass.getuser()
+    if user == 'root':
+        return '/root/.config/storjshare/configs'
+
+    else:
+        return '/home/' + user + '/.config/storjshare/configs'
+
+
+def guess_hostname():
+    return socket.gethostname()
 
 def save_settings(api_key, api_secret, server_guid, storj_config):
     settings = {
