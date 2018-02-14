@@ -43,8 +43,8 @@ def init_send():
             'dataReceivedCount': node['dataReceivedCount'],
             'shared': node['shared'],
             'bridgeConnectionStatus': node['bridgeConnectionStatus'],
-            'reputation': bridge_json['reputation']
-            'responseTime': bridge_json['responseTime']
+            'reputation': bridge_json['reputation'],
+            'responseTime': bridge_json['responseTime'],
             'rpcAddress': conf_json[node[configPath]]['rpcAddress'],
             'rpcPort': conf_json[node[configPath]]['rpcPort'],
             'storagePath': conf_json[node.configPath]['storagePath'],
@@ -55,8 +55,8 @@ def init_send():
     json_request = {
         'serverId': SERVERGUID,
         'datetime': time.time(),
-        'storjalyticsVerion', storjalytics_common.VERSION
-        'storjshareVersion': storjshare_version()
+        'storjalyticsVerion': storjalytics_common.VERSION,
+        'storjshareVersion': storjshare_version(),
         'nodes': json_nodes
     }
 
