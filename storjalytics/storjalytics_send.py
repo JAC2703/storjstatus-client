@@ -6,6 +6,7 @@ import json
 import os
 import requests
 import subprocess
+import time
 from crontab import CronTab
 from os import scandir
 from storjalytics import storjalytics_common
@@ -27,7 +28,37 @@ def init_send():
     storj_json = storjshare_json()
     conf_json = config_json()
 
+    json_nodes = []
 
+    for node in storj_json:
+        json_node = {
+            'id' = node['id'],
+            'status' = node['status'],
+            'configPath' = node['configPath'],
+            'uptime' = node['uptime'],
+            'restarts' = node['restarts'],
+            'allocs' = node['allocs'],
+            'dataReceivedCount' = node['dataReceivedCount'],
+            'shared' = node['shared'],
+            'bridgeConnectionStatus' = node['bridgeConnectionStatus'],
+            'rpcAddress' = conf_json[node[configPath]]['rpcAddress'],
+            'rpcPort' = conf_json[node[configPath]]['rpcPort'],
+            'storagePath' = conf_json[node.configPath]['storagePath'],
+            'storageAllocation' = conf_json[node[configPath]]['storageAllocation'],
+            'storageAllocation' = conf_json[node[configPath]]['storageAllocation'],
+        }
+        json_nodes.append(json_node)
+
+    json_request = {
+        'serverId' = SERVERGUID,
+        'datetime' = time.time(),
+        'nodes' = json_nodes
+    }
+
+    headers = {'content-type': 'application/json'}
+    resp = requests.post(APIENDPOINT + "stats", json=json_request, headers=headers)
+    if not resp.status_code == 200:
+        print_error("value returned when authenticating : " + resp.json()['description'], False)
 
 
 def checks():
@@ -55,13 +86,26 @@ def storjshare_json():
 
 def config_json():
     configs = os.scandir(STORJCONFIG)
+    nodes = []
 
     for f in configs:
         if f.is_file():
             # consume config file
+            with open(r, 'r') as f_open:
+                try:
+                    f_json = json.load(f_open)
 
+                    node['rpcAddress'] = f_json['rpcAddress']
+                    node['rpcPort'] = f_json['rpcPort']
+                    node['storagePath'] = f_json['storagePath']
+                    node['storageAllocation'] = f_json['storageAllocation']
 
-    return result_json
+                    nodes[f_json['storageAllocation']] = node
+                    print("Found valid config for " + f_json['storageAllocation'])
+                except:
+                    print("File " + f + " is not a valid Storjshare JSON config file")
+
+    return nodes
 
 
 def load_settings():
