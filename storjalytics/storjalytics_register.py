@@ -51,11 +51,11 @@ def init_register():
 
     if not args.arg_config_dir:
         config_dir = input('Enter your Storjshare config directory [' + guess_config_dir() + ']: ')
-        config_dif = config_dir or guess_config_dir()
+        config_dir = config_dir or guess_config_dir()
     else:
         config_dir = args.arg_config_dir
         print('Using config directory :' + config_dir)
-
+    
     # Final check on vars
     if not email or len(email) < 5:
         print_error('Email address is invalid')
