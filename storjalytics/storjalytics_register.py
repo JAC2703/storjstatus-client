@@ -11,14 +11,11 @@ from os import scandir
 from storjalytics import storjalytics_common
 
 ### Vars
-CONFIGFILE = '/etc/storjalytics/config.json'
-APIENDPOINT = 'http://localhost:8080/api/'
 FORCE = False
 PARSER = None
 ENV = None
 
 def init_register():
-    global APIENDPOINT
     global FORCE
     global PARSER
 
@@ -92,7 +89,6 @@ def init_register():
 
 
 def checks():
-    global CONFIGFILE
     global FORCE
 
     if os.geteuid() != 0:
@@ -101,7 +97,7 @@ def checks():
     if FORCE == True:
         print("Forcing regeneration of config and crontab. Note cron times may change.")
 
-    elif os.path.isfile(CONFIGFILE):
+    elif os.path.isfile(storjalytics_common.CONFIGFILE):
         print_error('Server config file already exists')
         exit(1)
 
@@ -132,8 +128,6 @@ def cmdargs():
 
 
 def save_settings(api_key, api_secret, server_guid, storj_config):
-    global CONFIGFILE
-
     settings = {
         'api_key': api_key,
         'api_secret': api_secret,
@@ -142,18 +136,17 @@ def save_settings(api_key, api_secret, server_guid, storj_config):
     }
 
     # Create folder if doesn't exist
-    if not os.path.exists(os.path.dirname(CONFIGFILE)):
+    if not os.path.exists(os.path.dirname(storjalytics_common.CONFIGFILE)):
         try:
-            os.makedirs(os.path.dirname(CONFIGFILE))
+            os.makedirs(os.path.dirname(storjalytics_common.CONFIGFILE))
         except OSError as exc:
             if exc.errno != errno.EEXIST:
-                print('Error creating directory ' + os.path.dirname(CONFIGFILE))
+                print('Error creating directory ' + os.path.dirname(storjalytics_common.CONFIGFILE))
                 exit(1)
 
     # Output settings
     settings_output = json.dumps(settings, sort_keys=True, indent=4)
-    settings_file_path = CONFIGFILE
-    settings_file = open(settings_file_path, 'w')
+    settings_file = open(storjalytics_common.CONFIGFILE, 'w')
     settings_file.write(settings_output)
     settings_file.close()
 
@@ -165,7 +158,7 @@ def api_creds(email, password):
     }
 
     headers = {'content-type': 'application/json'}
-    resp = requests.post(APIENDPOINT + "authentication", json=json_request, headers=headers)
+    resp = requests.post(storjalytics_common.APIENDPOINT + "authentication", json=json_request, headers=headers)
     if not resp.status_code == 200:
         print_error("value returned when authenticating : " + resp.json()['description'])
 
@@ -182,7 +175,7 @@ def server_guid(key, secret, name):
     }
 
     headers = {'content-type': 'application/json', 'api-key' : key, 'api-secret' : secret}
-    resp = requests.post(APIENDPOINT + "server", json=json_request, headers=headers)
+    resp = requests.post(storjalytics_common.APIENDPOINT + "server", json=json_request, headers=headers)
     if not resp.status_code == 200:
         print(resp.content)
         print_error("value returned when creating server : " + resp.json()['description'])

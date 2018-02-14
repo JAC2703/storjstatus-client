@@ -13,8 +13,6 @@ from os import scandir
 from storjalytics import storjalytics_common
 
 ### Vars
-CONFIGFILE = '/etc/storjalytics/config.json'
-APIENDPOINT = 'http://localhost:8080/api/'
 APIKEY = None
 APISECRET = None
 SERVERGUID = None
@@ -36,46 +34,44 @@ def init_send():
         bridge_json = bridge_info(node['id'])
 
         json_node = {
-            'id' = node['id'],
-            'status' = node['status'],
-            'configPath' = node['configPath'],
-            'uptime' = node['uptime'],
-            'restarts' = node['restarts'],
-            'allocs' = node['allocs'],
-            'dataReceivedCount' = node['dataReceivedCount'],
-            'shared' = node['shared'],
-            'bridgeConnectionStatus' = node['bridgeConnectionStatus'],
-            'reputation' = bridge_json['reputation']
-            'responseTime' = bridge_json['responseTime']
-            'rpcAddress' = conf_json[node[configPath]]['rpcAddress'],
-            'rpcPort' = conf_json[node[configPath]]['rpcPort'],
-            'storagePath' = conf_json[node.configPath]['storagePath'],
-            'storageAllocation' = conf_json[node[configPath]]['storageAllocation'],
-            'storageAllocation' = conf_json[node[configPath]]['storageAllocation'],
+            'id': node['id'],
+            'status': node['status'],
+            'configPath': node['configPath'],
+            'uptime': node['uptime'],
+            'restarts': node['restarts'],
+            'allocs': node['allocs'],
+            'dataReceivedCount': node['dataReceivedCount'],
+            'shared': node['shared'],
+            'bridgeConnectionStatus': node['bridgeConnectionStatus'],
+            'reputation': bridge_json['reputation']
+            'responseTime': bridge_json['responseTime']
+            'rpcAddress': conf_json[node[configPath]]['rpcAddress'],
+            'rpcPort': conf_json[node[configPath]]['rpcPort'],
+            'storagePath': conf_json[node.configPath]['storagePath'],
+            'storageAllocation': conf_json[node[configPath]]['storageAllocation']
         }
         json_nodes.append(json_node)
 
     json_request = {
-        'serverId' = SERVERGUID,
-        'datetime' = time.time(),
-        'version' = storjshare_version()
-        'nodes' = json_nodes
+        'serverId': SERVERGUID,
+        'datetime': time.time(),
+        'storjalyticsVerion', storjalytics_common.VERSION
+        'storjshareVersion': storjshare_version()
+        'nodes': json_nodes
     }
 
-    headers = {'content-type': 'application/json'}
-    resp = requests.post(APIENDPOINT + "stats", json=json_request, headers=headers)
+    headers = {'content-type': 'application/json', 'api-key' : APIKEY, 'api-secret' : APISECRET}
+    resp = requests.post(storjalytics_common.APIENDPOINT + "stats", json=json_request, headers=headers)
     if not resp.status_code == 200:
         print_error("Value returned when posting stats : " + resp.json()['description'], False)
 
 
 def checks():
-    global CONFIGFILE
-
     if os.geteuid() != 0:
         print_error('Please run this script with root privileges')
 
-    if not os.path.isfile(CONFIGFILE):
-        print_error('Server config file does not exist at ' + CONFIGFILE)
+    if not os.path.isfile(storjalytics_common.CONFIGFILE):
+        print_error('Server config file does not exist at ' + storjalytics_common.CONFIGFILE)
         exit(1)
 
     # Check strojshare exists
@@ -90,9 +86,9 @@ def storjshare_version():
     re_match = re.match( r"daemon: ([0-9\.]+), core: ([0-9\.]+), protocol: ([0-9\.]+)", result_data)
     if re_match:
         result = {
-            'daemon' = re_match.group(1),
-            'core' = re_match.group(2),
-            'protocol' = re_match.group(3),
+            'daemon': re_match.group(1),
+            'core': re_match.group(2),
+            'protocol': re_match.group(3),
         }
 
         return result
@@ -138,14 +134,13 @@ def config_json():
 
 
 def load_settings():
-    global CONFIGFILE
     global APIKEY
     global APISECRET
     global SERVERGUID
     global STORJCONFIG
 
     try:
-        settings_file = open(CONFIGFILE, 'r')
+        settings_file = open(storjalytics_common.CONFIGFILE, 'r')
         settings_data = settings_file.read()
         settings_json = json.loads(settings_data)
 
@@ -155,11 +150,11 @@ def load_settings():
         STORJCONFIG = settings['storj_config']
 
     except KeyError:
-        error_message('Settings file ' + CONFIGFILE + ' invalid. Please check your config.')
+        error_message('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
     except json.JSONDecodeError:
-        error_message('Settings file ' + CONFIGFILE + ' invalid. Please check your config.')
+        error_message('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
     except FileNotFoundError:
-        error_message('Settings file ' + CONFIGFILE + ' not found. Please run storjalytics-register.')
+        error_message('Settings file ' + storjalytics_common.CONFIGFILE + ' not found. Please run storjalytics-register.')
 
 
 def print_error(error_message):
