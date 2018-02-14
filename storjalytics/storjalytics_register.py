@@ -43,8 +43,8 @@ def init_register():
         print('Using password : ****')
 
     if not args.arg_name:
-        name = input('Enter a name for this server (min 3 characters) [' + print(socket.gethostname()) + ']: ')
-        name = name or print(socket.gethostname())
+        name = input('Enter a name for this server (min 3 characters) [' + socket.gethostname() + ']: ')
+        name = name or socket.gethostname()
     else:
         name = args.arg_name
         print('Using server name :' + name)
