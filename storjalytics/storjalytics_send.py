@@ -4,6 +4,7 @@ import argparse
 import getpass
 import json
 import os
+import re
 import requests
 import subprocess
 import time
@@ -31,6 +32,9 @@ def init_send():
     json_nodes = []
 
     for node in storj_json:
+        # Get values from bridge
+        bridge_json = bridge_info(node['id'])
+
         json_node = {
             'id' = node['id'],
             'status' = node['status'],
@@ -41,6 +45,8 @@ def init_send():
             'dataReceivedCount' = node['dataReceivedCount'],
             'shared' = node['shared'],
             'bridgeConnectionStatus' = node['bridgeConnectionStatus'],
+            'reputation' = bridge_json['reputation']
+            'responseTime' = bridge_json['responseTime']
             'rpcAddress' = conf_json[node[configPath]]['rpcAddress'],
             'rpcPort' = conf_json[node[configPath]]['rpcPort'],
             'storagePath' = conf_json[node.configPath]['storagePath'],
@@ -52,13 +58,14 @@ def init_send():
     json_request = {
         'serverId' = SERVERGUID,
         'datetime' = time.time(),
+        'version' = storjshare_version()
         'nodes' = json_nodes
     }
 
     headers = {'content-type': 'application/json'}
     resp = requests.post(APIENDPOINT + "stats", json=json_request, headers=headers)
     if not resp.status_code == 200:
-        print_error("value returned when authenticating : " + resp.json()['description'], False)
+        print_error("Value returned when posting stats : " + resp.json()['description'], False)
 
 
 def checks():
@@ -77,6 +84,28 @@ def checks():
     if code != "OK":
         print_error(result, False)
 
+
+def storjshare_version():
+    result_data = subprocess_result(['storjshare', '-V'])
+    re_match = re.match( r"daemon: ([0-9\.]+), core: ([0-9\.]+), protocol: ([0-9\.]+)", result_data)
+    if re_match:
+        result = {
+            'daemon' = re_match.group(1),
+            'core' = re_match.group(2),
+            'protocol' = re_match.group(3),
+        }
+
+        return result
+    else:
+        print_error("Error finding strojshare version")
+
+
+def bridge_info(id):
+    resp = requests.get("https://api.storj.io/contacts/" + id)
+    if not resp.status_code == 200:
+        print_error("Code returned when querying bridge : " + rstatus_code, False)
+
+    return resp
 
 def storjshare_json():
     result_data = subprocess_result(['storjshare', 'status', '--json'])
