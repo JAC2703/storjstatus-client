@@ -8,6 +8,7 @@ import requests
 import socket
 from crontab import CronTab
 from os import scandir
+from random import randint
 from storjalytics import storjalytics_common
 
 ### Vars
@@ -84,6 +85,8 @@ def init_register():
 
     # Save settings
     save_settings(key, secret, serverid, config_dir)
+
+    cron_job()
 
     print()
     print("Setup complete. You will see your statistics appear on your dashboard over the next hour")
@@ -203,25 +206,44 @@ def cron_job():
     result = storjalytics_common.subprocess_result(['which', 'storjalytics-send'])
 
     if 'storjalytics-send' in result[0].decode('utf-8'):
-        send_command = results[0].decode('utf-8').replace('\n', '') + ' >> /var/log/storjalytics.log 2>&1'
+        send_command = result[0].decode('utf-8').replace('\n', '') + ' >> /var/log/storjalytics.log 2>&1'
 
         cron = CronTab(tabfile='/etc/crontab', user=False)
         # Check for existing cronjob and remove
-        cron.remove(comment='storjalytics')
+        cron.remove_all(comment='storjalytics')
 
         # Add new cron
         job = cron.new(command=send_command, user='root', comment='storjalytics')
         minute = randint(0, 59)
         job.minute.on(minute)
 
+        minute = cron_minute(minute)
+        job.minute.also.on(minute)
+
+        minute = cron_minute(minute)
+        job.minute.also.on(minute)
+
+        minute = cron_minute(minute)
+        job.minute.also.on(minute)
+
         try:
-            system_cron.write()
+            cron.write()
             storjalytics_common.subprocess_result(['service', 'cron', 'reload'])
+            print("Cron set for: " + job.render())
         except PermissionError:
             print_error('Unable to create cron job. Exiting.')
 
     else:
         print_error('There was an error finding the storjalytics-send command. Check your storjalytics installation.')
+
+
+def cron_minute(minute):
+    add = 15
+    next_minute = minute + add
+    if next_minute > 59:
+            next_minute = next_minute - 60
+
+    return next_minute
 
 
 def print_error(error_message, show_help=True):
