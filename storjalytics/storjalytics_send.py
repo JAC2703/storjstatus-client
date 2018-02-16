@@ -72,7 +72,7 @@ def init_send():
     try:
         resp = requests.post(storjalytics_common.APIENDPOINT + "stats", json=json_request, headers=headers)
         if not resp.status_code == 200:
-            print_error("Value returned when posting stats : " + resp.json()['description'], False)
+            print_error("Value returned when posting stats : " + resp.json()['description'])
     except Exception as e:
         print(str(e))
         print_error("Error sending report to: " + storjalytics_common.APIENDPOINT + "stats. Please try again later")
@@ -85,13 +85,12 @@ def checks():
 
     if not os.path.isfile(storjalytics_common.CONFIGFILE):
         print_error('Server config file does not exist at ' + storjalytics_common.CONFIGFILE)
-        exit(1)
 
     # Check strojshare exists
     code, result = storjalytics_common.check_strojshare()
 
     if code != "OK":
-        print_error(result, False)
+        print_error(result)
 
 
 def storjshare_version():
@@ -112,7 +111,7 @@ def storjshare_version():
 def bridge_info(id):
     resp = requests.get("https://api.storj.io/contacts/" + id)
     if not resp.status_code == 200:
-        print_error("Code returned when querying bridge : " + rstatus_code, False)
+        print_error("Code returned when querying bridge : " + rstatus_code)
 
     return json.loads(resp.content.decode('utf-8'))
 
