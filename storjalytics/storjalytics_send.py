@@ -129,7 +129,7 @@ def config_json():
     for root, dirs, filenames in os.walk(STORJCONFIG):
         for f in filenames:
             # consume config file
-            with open(os.path.join(root, f), 'r') as f_open:
+            with open(os.path.join(root, f), 'r', encoding = "ISO-8859-1") as f_open:
                 print("Parsing config file: " + os.path.join(root, f))
                 node = {}
                 f_data = f_open.read()
