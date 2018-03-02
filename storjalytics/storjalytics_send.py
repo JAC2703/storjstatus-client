@@ -49,8 +49,8 @@ def init_send():
             'bridgeConnectionStatus': node['bridgeConnectionStatus'],
             'reputation': bridge_json['reputation'],
             'responseTime': bridge_json['responseTime'],
-            'lastTimeout': bridge_json['lastTimeout'],
-            'timeoutRate': bridge_json['timeoutRate'],
+            'lastTimeout': bridge_json.get('lastTimeout',''),
+            'timeoutRate': bridge_json.get('timeoutRate',0),
             'spaceAvailable': bridge_json['spaceAvailable'],
             'lastSeen': bridge_json['lastSeen'],
             'rpcAddress': conf_json[node['configPath']]['rpcAddress'],
@@ -67,7 +67,7 @@ def init_send():
         'storjshareVersion': storjshare_version(),
         'nodes': json_nodes
     }
-    print(json_request)
+    print('\nJSON Request...\n'+json.dumps(json_request, indent=4, sort_keys=True))
     headers = {'content-type': 'application/json', 'api-key' : APIKEY, 'api-secret' : APISECRET}
     try:
         resp = requests.post(storjalytics_common.APIENDPOINT + "stats", json=json_request, headers=headers)
