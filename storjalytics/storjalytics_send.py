@@ -34,31 +34,35 @@ def init_send():
     for node in storj_json:
         # Get values from bridge
         print("Processing nodeid: " + node['id'])
-        
-        bridge_json = bridge_info(node['id'])
 
-        json_node = {
-            'id': node['id'],
-            'status': node['status'],
-            'storagePath': node['configPath'],
-            'uptime': node['uptime'],
-            'restarts': node['restarts'],
-            'allocs': node['allocs'],
-            'dataReceivedCount': node['dataReceivedCount'],
-            'shared': node['shared'],
-            'bridgeConnectionStatus': node['bridgeConnectionStatus'],
-            'reputation': bridge_json['reputation'],
-            'responseTime': bridge_json['responseTime'],
-            'lastTimeout': bridge_json.get('lastTimeout',''),
-            'timeoutRate': bridge_json.get('timeoutRate',0),
-            'spaceAvailable': bridge_json['spaceAvailable'],
-            'lastSeen': bridge_json['lastSeen'],
-            'rpcAddress': conf_json[node['configPath']]['rpcAddress'],
-            'rpcPort': conf_json[node['configPath']]['rpcPort'],
-            #'storagePath': conf_json[node['configPath']]['storagePath'],
-            'storageAllocation': conf_json[node['configPath']]['storageAllocation']
-        }
-        json_nodes.append(json_node)
+        # Check to see if a config exists for this node, if not, ignore it.
+        if node['configPath'] in conf_json:
+        
+            bridge_json = bridge_info(node['id'])
+
+            json_node = {
+                'id': node['id'],
+                'status': node['status'],
+                'storagePath': node['configPath'],
+                'uptime': node['uptime'],
+                'restarts': node['restarts'],
+                'allocs': node['allocs'],
+                'dataReceivedCount': node['dataReceivedCount'],
+                'shared': node['shared'],
+                'bridgeConnectionStatus': node['bridgeConnectionStatus'],
+                'reputation': bridge_json['reputation'],
+                'responseTime': bridge_json['responseTime'],
+                'lastTimeout': bridge_json.get('lastTimeout',''),
+                'timeoutRate': bridge_json.get('timeoutRate',0),
+                'spaceAvailable': bridge_json['spaceAvailable'],
+                'lastSeen': bridge_json['lastSeen'],
+                'rpcAddress': conf_json[node['configPath']]['rpcAddress'],
+                'rpcPort': conf_json[node['configPath']]['rpcPort'],
+                'storageAllocation': conf_json[node['configPath']]['storageAllocation']
+            }
+            json_nodes.append(json_node)
+        else:
+            print_warning("No config file found for Node: " + node['id'] + ". Data for this node will not be sent.")
 
     json_request = {
         'serverId': SERVERGUID,
@@ -152,7 +156,12 @@ def config_json():
                 except:
                     print("File " + f + " is not a valid Storjshare JSON config file")
 
-    return nodes
+    if nodes:
+        return nodes
+    else:
+        print_error('No valid config files found. Exiting.')
+        exit(1)
+         
 
 
 
@@ -173,11 +182,11 @@ def load_settings():
         STORJCONFIG = settings_json['storj_config']
 
     except KeyError:
-        error_message('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
+        print_error('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
     except json.JSONDecodeError:
-        error_message('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
+        print_error('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
     except FileNotFoundError:
-        error_message('Settings file ' + storjalytics_common.CONFIGFILE + ' not found. Please run storjalytics-register.')
+        print_error('Settings file ' + storjalytics_common.CONFIGFILE + ' not found. Please run storjalytics-register.')
 
 
 def print_error(error_message):
@@ -187,5 +196,11 @@ def print_error(error_message):
 
     exit(1)
 
+def print_warning(warning_message):
+    print()
+    print("WARNING : " + warning_message)
+    print()
+
 if __name__ == '__main__':
     init_send()
+
