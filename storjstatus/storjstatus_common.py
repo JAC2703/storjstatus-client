@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import subprocess
 from storjstatus import version
 import logging
@@ -24,13 +25,20 @@ def setup_logger():
     global log
 
     if (log == None):
-        logFormatter = logging.basicConfig(format='%(asctime)s [%(levelname)s]  %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
-        log = logging.getLogger()
-        log.setLevel(logging.DEBUG)
 
-        consoleHandler = logging.StreamHandler()
+        logFormatter = logging.basicConfig(format='%(asctime)s [%(levelname)s]  %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+
+        consoleHandler = logging.StreamHandler(sys.stdout)
         consoleHandler.setFormatter(logFormatter)
-        log.addHandler(consoleHandler)
+        logHandlers = [consoleHandler]
+
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format=logFormatter,
+            handlers=logHandlers
+        )
+
+        log = logging.getLogger()
 
 
 def cleanup_json(json):

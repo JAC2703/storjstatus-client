@@ -81,7 +81,7 @@ def init_send():
         if not resp.status_code == 200:
             print_error("Value returned when posting stats : " + resp.json()['description'])
     except Exception as e:
-        print(str(e))
+        storjstatus_common.log.error(str(e))
         print_error("Error sending report to: " + storjstatus_common.APIENDPOINT + "stats. Please try again later")
 
 
