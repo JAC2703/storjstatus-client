@@ -10,6 +10,7 @@ variables:
 stages:
   - set-env
   - deploy-test
+  - cleanup
 
 
 
@@ -52,6 +53,6 @@ cleanup_deploy:
   stage: cleanup
   when: always
   script:
-    - rm -vf ~/.pypirc
+    - echo rm -vf ~/.pypirc
   tags:
     - storjapi
