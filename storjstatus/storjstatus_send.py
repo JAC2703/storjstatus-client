@@ -11,7 +11,7 @@ import time
 from crontab import CronTab
 from os import scandir
 from storjstatus import storjstatus_common
-import logging
+
 
 ### Vars
 APIKEY = None
@@ -21,9 +21,9 @@ STORJCONFIG = None
 
 def init_send():
 
-    logging.basicConfig(format='%(asctime)s %(levelname)s  %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
-
     storjstatus_common.setup_env()
+
+    storjstatus_common.setup_logger()
 
     checks();
 
@@ -36,7 +36,7 @@ def init_send():
 
     for node in storj_json:
         # Get values from bridge
-        print("Processing nodeid: " + node['id'])
+        storjstatus_common.log.info("Processing nodeid: " + node['id'])
 
         # Check to see if a config exists for this node, if not, ignore it.
         if node['configPath'] in conf_json:
@@ -65,7 +65,7 @@ def init_send():
             }
             json_nodes.append(json_node)
         else:
-            logging.warning("No config file found for Node: %s. Data for this node will not be sent.", node['id'])
+            storjstatus_common.log.warning("No config file found for Node: %s. Data for this node will not be sent.", node['id'])
 
     json_request = {
         'serverId': SERVERGUID,
@@ -74,7 +74,7 @@ def init_send():
         'storjshareVersion': storjshare_version(),
         'nodes': json_nodes
     }
-    logging.info('JSON Request:\n' + json.dumps(json_request, indent=4, sort_keys=True))
+    storjstatus_common.log.info('JSON Request:\n' + json.dumps(json_request, indent=4, sort_keys=True))
     headers = {'content-type': 'application/json', 'api-key' : APIKEY, 'api-secret' : APISECRET}
     try:
         resp = requests.post(storjstatus_common.APIENDPOINT + "stats", json=json_request, headers=headers)
@@ -137,7 +137,7 @@ def config_json():
         for f in filenames:
             # consume config file
             with open(os.path.join(root, f), 'r', encoding = "ISO-8859-1") as f_open:
-                logging.debug("Parsing config file: " + os.path.join(root, f))
+                storjstatus_common.log.debug("Parsing config file: " + os.path.join(root, f))
                 node = {}
                 f_data = f_open.read()
                 f_clean = storjstatus_common.cleanup_json(f_data)
@@ -151,13 +151,13 @@ def config_json():
                     node['storageAllocation'] = f_json['storageAllocation']
 
                     nodes[f_json['storagePath']] = node
-                    logging.info("Found valid config for " + f_json['storagePath'])
+                    storjstatus_common.log.info("Found valid config for " + f_json['storagePath'])
                 except KeyError:
-                    logging.warning('JSON config file ' + f + ' invalid. Please check your config.')
+                    storjstatus_common.log.warning('JSON config file ' + f + ' invalid. Please check your config.')
                 except json.JSONDecodeError:
-                    logging.warning('JSON config file ' + f + ' invalid. Please check your config.')
+                    storjstatus_common.log.warning('JSON config file ' + f + ' invalid. Please check your config.')
                 except:
-                    logging.warning("File " + f + " is not a valid Storjshare JSON config file")
+                    storjstatus_common.log.warning("File " + f + " is not a valid Storjshare JSON config file")
 
     if nodes:
         return nodes
@@ -193,7 +193,7 @@ def load_settings():
 
 
 def print_error(error_message):
-    logging.error(error_message)
+    storjstatus_common.log.error(error_message)
 
     exit(1)
 

@@ -2,10 +2,12 @@ import os
 import re
 import subprocess
 from storjstatus import version
+import logging
 
 
 CONFIGFILE = '/etc/storjstatus/config.json'
 APIENDPOINT = 'https://www.storjstatus.com/api/'
+log = None
 
 def setup_env():
     global ENV
@@ -17,6 +19,20 @@ def setup_env():
 def get_version():
     return version.__version__
 
+
+def get_log():
+    global log
+
+    if (log == None):
+        logFormatter = logging.basicConfig(format='%(asctime)s [%(levelname)s]  %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+        log = logging.getLogger()
+        log.setLevel(logging.DEBUG)
+
+        consoleHandler = logging.StreamHandler()
+        consoleHandler.setFormatter(logFormatter)
+        rootLogger.addHandler(consoleHandler)
+
+    return log
 
 def cleanup_json(json):
     json = re.sub(r'(?<!https:)//.*', '', json, flags = re.MULTILINE)
@@ -30,7 +46,6 @@ def check_strojshare():
     if 'storjshare' in result[0].decode('utf-8'):
         try:
             result = subprocess_result(['storjshare', '-V'])
-            print("Found Storjshare : " + result[0].decode('utf-8').strip())
 
         except FileNotFoundError:
             return "fail", "Unable to find storjshare binary in PATH"
