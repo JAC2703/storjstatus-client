@@ -9,7 +9,7 @@ import socket
 from crontab import CronTab
 from os import scandir
 from random import randint
-from storjalytics import storjalytics_common
+from storjstatus import storjstatus_common
 
 ### Vars
 FORCE = False
@@ -20,7 +20,7 @@ def init_register():
     global FORCE
     global PARSER
 
-    storjalytics_common.setup_env()
+    storjstatus_common.setup_env()
     header()
     cmdargs()
 
@@ -32,13 +32,13 @@ def init_register():
     checks()
 
     if not args.arg_email:
-        email = input('Enter your StorjAlytics email address: ')
+        email = input('Enter your StorjStatus email address: ')
     else:
         email = args.arg_email
         print('Using email :' + email)
 
     if not args.arg_password:
-        password = getpass.getpass('Enter your StorjAlytics password: ')
+        password = getpass.getpass('Enter your StorjStatus password: ')
     else:
         password = args.arg_password
         print('Using password : ****')
@@ -101,12 +101,12 @@ def checks():
     if FORCE == True:
         print("Forcing regeneration of config and crontab. Note cron times may change.")
 
-    elif os.path.isfile(storjalytics_common.CONFIGFILE):
+    elif os.path.isfile(storjstatus_common.CONFIGFILE):
         print_error('Server config file already exists')
         exit(1)
 
     # Check strojshare exists
-    code, result = storjalytics_common.check_strojshare()
+    code, result = storjstatus_common.check_strojshare()
 
     if code != "OK":
         print_error(result, False)
@@ -122,9 +122,9 @@ def header():
 def cmdargs():
     global PARSER
 
-    PARSER = argparse.ArgumentParser(prog='storjalytics-register', add_help=True)
-    PARSER.add_argument('--email', '-e', help="Your StorjAlytics registered email address", type=str, action='store', dest='arg_email', nargs='?')
-    PARSER.add_argument('--password', '-p', help="Your StorjAlytics password", type=str, action='store', dest='arg_password', nargs='?')
+    PARSER = argparse.ArgumentParser(prog='storjstatus-register', add_help=True)
+    PARSER.add_argument('--email', '-e', help="Your StorjStatus registered email address", type=str, action='store', dest='arg_email', nargs='?')
+    PARSER.add_argument('--password', '-p', help="Your StorjStatus password", type=str, action='store', dest='arg_password', nargs='?')
     PARSER.add_argument('--server-name', '-n', help="Name for this server to use in the dashboard", type=str, action='store', dest='arg_name', nargs='?')
     PARSER.add_argument('--config-dir', '-c', help="The location to your local Storjshare config file", type=str, action='store', dest='arg_config_dir', nargs='?')
     PARSER.add_argument('--force', '-f', help="This will regenerate the cron and config file if it already exists", action='store_true', dest='arg_force')
@@ -151,17 +151,17 @@ def save_settings(api_key, api_secret, server_guid, storj_config):
     }
 
     # Create folder if doesn't exist
-    if not os.path.exists(os.path.dirname(storjalytics_common.CONFIGFILE)):
+    if not os.path.exists(os.path.dirname(storjstatus_common.CONFIGFILE)):
         try:
-            os.makedirs(os.path.dirname(storjalytics_common.CONFIGFILE))
+            os.makedirs(os.path.dirname(storjstatus_common.CONFIGFILE))
         except OSError as exc:
             if exc.errno != errno.EEXIST:
-                print('Error creating directory ' + os.path.dirname(storjalytics_common.CONFIGFILE))
+                print('Error creating directory ' + os.path.dirname(storjstatus_common.CONFIGFILE))
                 exit(1)
 
     # Output settings
     settings_output = json.dumps(settings, sort_keys=True, indent=4)
-    settings_file = open(storjalytics_common.CONFIGFILE, 'w')
+    settings_file = open(storjstatus_common.CONFIGFILE, 'w')
     settings_file.write(settings_output)
     settings_file.close()
 
@@ -173,7 +173,7 @@ def api_creds(email, password):
     }
 
     headers = {'content-type': 'application/json'}
-    resp = requests.post(storjalytics_common.APIENDPOINT + "authentication", json=json_request, headers=headers)
+    resp = requests.post(storjstatus_common.APIENDPOINT + "authentication", json=json_request, headers=headers)
     if not resp.status_code == 200:
         print_error("value returned when authenticating : " + resp.json()['description'])
 
@@ -190,7 +190,7 @@ def server_guid(key, secret, name):
     }
 
     headers = {'content-type': 'application/json', 'api-key' : key, 'api-secret' : secret}
-    resp = requests.post(storjalytics_common.APIENDPOINT + "server", json=json_request, headers=headers)
+    resp = requests.post(storjstatus_common.APIENDPOINT + "server", json=json_request, headers=headers)
     if not resp.status_code == 200:
         print(resp.content)
         print_error("value returned when creating server : " + resp.json()['description'])
@@ -202,17 +202,17 @@ def server_guid(key, secret, name):
 
 
 def cron_job():
-    result = storjalytics_common.subprocess_result(['which', 'storjalytics-send'])
+    result = storjstatus_common.subprocess_result(['which', 'storjstatus-send'])
 
-    if 'storjalytics-send' in result[0].decode('utf-8'):
-        send_command = result[0].decode('utf-8').replace('\n', '') + ' >> /var/log/storjalytics.log 2>&1'
+    if 'storjstatus-send' in result[0].decode('utf-8'):
+        send_command = result[0].decode('utf-8').replace('\n', '') + ' >> /var/log/storjstatus.log 2>&1'
 
         cron = CronTab(tabfile='/etc/crontab', user=False)
         # Check for existing cronjob and remove
-        cron.remove_all(comment='storjalytics')
+        cron.remove_all(comment='storjstatus')
 
         # Add new cron
-        job = cron.new(command=send_command, user='root', comment='storjalytics')
+        job = cron.new(command=send_command, user='root', comment='storjstatus')
         minute = randint(0, 59)
         job.minute.on(minute)
 
@@ -227,13 +227,13 @@ def cron_job():
 
         try:
             cron.write()
-            storjalytics_common.subprocess_result(['service', 'cron', 'reload'])
+            storjstatus_common.subprocess_result(['service', 'cron', 'reload'])
             print("Cron set for: " + job.render())
         except PermissionError:
             print_error('Unable to create cron job. Exiting.')
 
     else:
-        print_error('There was an error finding the storjalytics-send command. Check your storjalytics installation.')
+        print_error('There was an error finding the storjstatus-send command. Check your storjstatus installation.')
 
 
 def cron_minute(minute):
