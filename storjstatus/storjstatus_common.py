@@ -2,9 +2,9 @@ import os
 import re
 import subprocess
 
-VERSION = '0.1.0'
-CONFIGFILE = '/etc/storjalytics/config.json'
-APIENDPOINT = 'https://storjapi-test.jamescoyle.net/api/'
+VERSION = '0.2.0'
+CONFIGFILE = '/etc/storjstatus/config.json'
+APIENDPOINT = 'https://www.storjstatus.com/api/'
 
 def setup_env():
     global ENV

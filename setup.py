@@ -2,17 +2,16 @@
 
 from setuptools import setup
 
-VERSION = '0.1.0'
-
-setup(name='storjalytics-client',
+setup(name='storjstatus-client',
       version=VERSION,
       description='Storj utility for reporting farmer statistics',
       license='Apache2',
-      packages=['storjalytics'],
+      packages=['storjstatus'],
+      version='0.2.0',
       author='James Coyle',
       author_email='james.coyle@jamesdcoyle.net',
       python_requires='>=3.5',
-      url='https://wwwgit.jamescoyle.net/james.coyle/storjalytics-client',
+      url='https://www.storjstatus.com/install-client',
       install_requires=[
             'requests==2.18.4',
             'python-crontab==2.2.8',
@@ -20,8 +19,8 @@ setup(name='storjalytics-client',
       ],
       entry_points={
           'console_scripts': [
-              'storjalytics-register=storjalytics:register',
-              'storjalytics-send=storjalytics:send'
+              'storjstatus-register=storjstatus:register',
+              'storjstatus-send=storjstatus:send'
           ]
       }
  )

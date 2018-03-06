@@ -56,7 +56,7 @@ def init_register():
     else:
         config_dir = args.arg_config_dir
         print('Using config directory :' + config_dir)
-    
+
     # Final check on vars
     if not email or len(email) < 5:
         print_error('Email address is invalid')
@@ -114,8 +114,7 @@ def checks():
 
 def header():
     print('####################################################')
-    print('#         StorjAlytics Server Registration         #')
-    print('#    Written by James Coyle (www.jamescoyle.net)   #')
+    print('#         StorjStatus Server Registration          #')
     print('####################################################')
     print()
 
