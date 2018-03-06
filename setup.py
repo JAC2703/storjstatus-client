@@ -2,7 +2,6 @@
 
 from setuptools import setup
 from pip.req import parse_requirements
-import pypandoc
 
 exec(open('storjstatus/version.py').read())
 
