@@ -31,7 +31,7 @@ set-env:
     - echo "repository=https://testpypi.python.org/pypi"
     - echo "username=" ${PYPI_USERNAME} >> ~/.pypirc
     - echo "password=" ${PYPI_TEST_PASSWORD} >> ~/.pypirc
-    - cp ~/.pypirc /tmp/.pypirc
+    - chmod 600 ~/.pypirc
   tags:
     - storjapi
 
