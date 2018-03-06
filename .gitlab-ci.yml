@@ -10,7 +10,7 @@ variables:
 stages:
   - set-env
   - deploy-test
-  - cleanup
+
 
 
 set-env:
