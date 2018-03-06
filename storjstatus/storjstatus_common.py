@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+from storjstatus import version
 
 
 CONFIGFILE = '/etc/storjstatus/config.json'
@@ -13,6 +14,10 @@ def setup_env():
 
     ENV = os.environ
     ENV['PATH'] = ENV.get('PATH') + ':/usr/local/bin:/usr/bin/'
+
+
+def get_version():
+    return __version__
 
 
 def cleanup_json(json):
