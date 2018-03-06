@@ -7,8 +7,6 @@ from storjstatus import version
 CONFIGFILE = '/etc/storjstatus/config.json'
 APIENDPOINT = 'https://www.storjstatus.com/api/'
 
-exec(open('version.py').read())
-
 def setup_env():
     global ENV
 
