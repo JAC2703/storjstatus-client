@@ -10,7 +10,7 @@ import subprocess
 import time
 from crontab import CronTab
 from os import scandir
-from storjalytics import storjalytics_common
+from storjstatus import storjstatus_common
 
 ### Vars
 APIKEY = None
@@ -19,8 +19,8 @@ SERVERGUID = None
 STORJCONFIG = None
 
 def init_send():
-    
-    storjalytics_common.setup_env()
+
+    storjstatus_common.setup_env()
 
     checks();
 
@@ -37,7 +37,7 @@ def init_send():
 
         # Check to see if a config exists for this node, if not, ignore it.
         if node['configPath'] in conf_json:
-        
+
             bridge_json = bridge_info(node['id'])
 
             json_node = {
@@ -67,38 +67,38 @@ def init_send():
     json_request = {
         'serverId': SERVERGUID,
         'datetime': time.time(),
-        'storjalyticsVerion': storjalytics_common.VERSION,
+        'storjstatusVerion': storjstatus_common.VERSION,
         'storjshareVersion': storjshare_version(),
         'nodes': json_nodes
     }
-    print('\nJSON Request...\n'+json.dumps(json_request, indent=4, sort_keys=True))
+    print_info('\nJSON Request...\n'+json.dumps(json_request, indent=4, sort_keys=True))
     headers = {'content-type': 'application/json', 'api-key' : APIKEY, 'api-secret' : APISECRET}
     try:
-        resp = requests.post(storjalytics_common.APIENDPOINT + "stats", json=json_request, headers=headers)
+        resp = requests.post(storjstatus_common.APIENDPOINT + "stats", json=json_request, headers=headers)
         if not resp.status_code == 200:
             print_error("Value returned when posting stats : " + resp.json()['description'])
     except Exception as e:
         print(str(e))
-        print_error("Error sending report to: " + storjalytics_common.APIENDPOINT + "stats. Please try again later")
-        
+        print_error("Error sending report to: " + storjstatus_common.APIENDPOINT + "stats. Please try again later")
+
 
 
 def checks():
     if os.geteuid() != 0:
         print_error('Please run this script with root privileges')
 
-    if not os.path.isfile(storjalytics_common.CONFIGFILE):
-        print_error('Server config file does not exist at ' + storjalytics_common.CONFIGFILE)
+    if not os.path.isfile(storjstatus_common.CONFIGFILE):
+        print_error('Server config file does not exist at ' + storjstatus_common.CONFIGFILE)
 
     # Check strojshare exists
-    code, result = storjalytics_common.check_strojshare()
+    code, result = storjstatus_common.check_strojshare()
 
     if code != "OK":
         print_error(result)
 
 
 def storjshare_version():
-    result_data = storjalytics_common.subprocess_result(['storjshare', '-V'])
+    result_data = storjstatus_common.subprocess_result(['storjshare', '-V'])
     re_match = re.match( r"daemon: ([0-9\.]+), core: ([0-9\.]+), protocol: ([0-9\.]+)", result_data[0].decode('utf-8'))
     if re_match:
         result = {
@@ -121,7 +121,7 @@ def bridge_info(id):
 
 
 def storjshare_json():
-    result_data = storjalytics_common.subprocess_result(['storjshare', 'status', '--json'])
+    result_data = storjstatus_common.subprocess_result(['storjshare', 'status', '--json'])
 
     return json.loads(result_data[0].decode('utf-8')) #result_json
 
@@ -134,11 +134,11 @@ def config_json():
         for f in filenames:
             # consume config file
             with open(os.path.join(root, f), 'r', encoding = "ISO-8859-1") as f_open:
-                print("Parsing config file: " + os.path.join(root, f))
+                print_info("Parsing config file: " + os.path.join(root, f))
                 node = {}
                 f_data = f_open.read()
-                f_clean = storjalytics_common.cleanup_json(f_data)
-         
+                f_clean = storjstatus_common.cleanup_json(f_data)
+
                 try:
                     f_json = json.loads(f_clean)
 
@@ -148,20 +148,20 @@ def config_json():
                     node['storageAllocation'] = f_json['storageAllocation']
 
                     nodes[f_json['storagePath']] = node
-                    print("Found valid config for " + f_json['storagePath'])
+                    print_info("Found valid config for " + f_json['storagePath'])
                 except KeyError:
-                    print('JSON config file ' + f + ' invalid. Please check your config.')
+                    print_warning('JSON config file ' + f + ' invalid. Please check your config.')
                 except json.JSONDecodeError:
-                    print('JSON config file ' + f + ' invalid. Please check your config.')
+                    print_warning('JSON config file ' + f + ' invalid. Please check your config.')
                 except:
-                    print("File " + f + " is not a valid Storjshare JSON config file")
+                    print_warning("File " + f + " is not a valid Storjshare JSON config file")
 
     if nodes:
         return nodes
     else:
         print_error('No valid config files found. Exiting.')
         exit(1)
-         
+
 
 
 
@@ -172,7 +172,7 @@ def load_settings():
     global STORJCONFIG
 
     try:
-        settings_file = open(storjalytics_common.CONFIGFILE, 'r')
+        settings_file = open(storjstatus_common.CONFIGFILE, 'r')
         settings_data = settings_file.read()
         settings_json = json.loads(settings_data)
 
@@ -182,11 +182,11 @@ def load_settings():
         STORJCONFIG = settings_json['storj_config']
 
     except KeyError:
-        print_error('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
+        print_error('Settings file ' + storjstatus_common.CONFIGFILE + ' invalid. Please check your config.')
     except json.JSONDecodeError:
-        print_error('Settings file ' + storjalytics_common.CONFIGFILE + ' invalid. Please check your config.')
+        print_error('Settings file ' + storjstatus_common.CONFIGFILE + ' invalid. Please check your config.')
     except FileNotFoundError:
-        print_error('Settings file ' + storjalytics_common.CONFIGFILE + ' not found. Please run storjalytics-register.')
+        print_error('Settings file ' + storjstatus_common.CONFIGFILE + ' not found. Please run storjstatus-register.')
 
 
 def print_error(error_message):
@@ -201,6 +201,10 @@ def print_warning(warning_message):
     print("WARNING : " + warning_message)
     print()
 
+def print_info(warning_message):
+    print()
+    print("INFO : " + warning_message)
+    print()
+
 if __name__ == '__main__':
     init_send()
-
