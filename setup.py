@@ -21,7 +21,7 @@ setup(name='storjstatus',
       author='James Coyle',
       author_email='james.coyle@jamesdcoyle.net',
       python_requires='>=3.5',
-      url='https://www.storjstatus.com/install-client',
+      url='https://www.storjstatus.com/',
       install_requires=[str(ir.req) for ir in dependencies()],
       entry_points={
           'console_scripts': [
