@@ -1,0 +1,57 @@
+before_script:
+  - export PATH=$HOME/bin:/usr/local/bin:/usr/bin:/bin:/usr/bin/mvn
+
+variables:
+    PYPY_USERNAME: SECRET
+    PYPY_TEST_PASSWORD: SECRET
+    PYPY_LIVE_PASSWORD: SECRET
+
+
+stages:
+  - set-env
+  - deploy-test
+  - cleanup
+
+
+set-env:
+  stage: set-env
+  when: always
+  script:
+    - echo "[distutils]" >> ~/.pypirc
+    - echo "index-servers=" >> ~/.pypirc
+    - echo "    pypi" >> ~/.pypirc
+    - echo "    pypitest" >> ~/.pypirc
+    - echo "" >> ~/.pypirc
+    - echo "[pypi]" >> ~/.pypirc
+    - echo "repository=https://pypi.python.org/pypi"
+    - echo "username=" ${PYPI_USERNAME} >> ~/.pypirc
+    - echo "password=" ${PYPI_LIVE_PASSWORD} >> ~/.pypirc
+    - echo "" >> ~/.pypirc
+    - echo "[pypitest]" >> ~/.pypirc
+    - echo "repository=https://testpypi.python.org/pypi"
+    - echo "username=" ${PYPI_USERNAME} >> ~/.pypirc
+    - echo "password=" ${PYPI_TEST_PASSWORD} >> ~/.pypirc
+    - cp ~/.pypirc /tmp/.pypirc
+  tags:
+    - storjapi
+
+deploy-test:
+  stage: deploy-test
+  script:
+    - echo "need to reg first..."
+  except:
+    - master
+  tags:
+    - storjapi
+  environment:
+    name: production
+
+
+
+cleanup_deploy:
+  stage: cleanup
+  when: always
+  script:
+    - rm -vf ~/.pypirc
+  tags:
+    - storjapi
