@@ -25,13 +25,13 @@ set-env:
     - echo "" >> ~/.pypirc
     - echo "[pypi]" >> ~/.pypirc
     - echo "repository=https://pypi.python.org/pypi" >> ~/.pypirc
-    - echo "username=" ${PYPI_USERNAME} >> ~/.pypirc
-    - echo "password=" ${PYPI_LIVE_PASSWORD} >> ~/.pypirc
+    - echo "username="${PYPI_USERNAME} >> ~/.pypirc
+    - echo "password="${PYPI_LIVE_PASSWORD} >> ~/.pypirc
     - echo "" >> ~/.pypirc
     - echo "[pypitest]" >> ~/.pypirc
     - echo "repository=https://testpypi.python.org/pypi" >> ~/.pypirc
-    - echo "username=" ${PYPI_USERNAME} >> ~/.pypirc
-    - echo "password=" ${PYPI_TEST_PASSWORD} >> ~/.pypirc
+    - echo "username="${PYPI_USERNAME} >> ~/.pypirc
+    - echo "password="${PYPI_TEST_PASSWORD} >> ~/.pypirc
     - chmod 600 ~/.pypirc
   tags:
     - storjapi
@@ -39,13 +39,14 @@ set-env:
 deploy-test:
   stage: deploy-test
   script:
-    - echo "need to reg first..."
+    - python setup.py bdist_wheel --universal
+    - echo twine upload --repository testpypi dist/*
   except:
     - master
   tags:
     - storjapi
   environment:
-    name: production
+    name: test
 
 
 
