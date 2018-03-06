@@ -67,7 +67,7 @@ def init_send():
     json_request = {
         'serverId': SERVERGUID,
         'datetime': time.time(),
-        'storjstatusVerion': storjstatus_common.VERSION,
+        'storjclientVerion': storjstatus_common.get_version(),
         'storjshareVersion': storjshare_version(),
         'nodes': json_nodes
     }
