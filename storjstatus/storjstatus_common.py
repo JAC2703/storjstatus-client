@@ -26,19 +26,18 @@ def setup_logger():
 
     if (log == None):
 
-        logFormatter = logging.basicConfig(format='%(asctime)s [%(levelname)s]  %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
+        ssLog = logging.getLogger('storjstatus')
+        ssLog.setLevel(logging.DEBUG)
+        ssLog.propagate = False
 
-        consoleHandler = logging.StreamHandler(sys.stdout)
-        consoleHandler.setFormatter(logFormatter)
-        logHandlers = [consoleHandler]
+        logFormatter = logging.Formatter('%(asctime)s %(levelname)8s  %(message)s', datefmt='%d/%m/%Y %I:%M:%S %p')
 
-        logging.basicConfig(
-            level=logging.DEBUG,
-            format=logFormatter,
-            handlers=logHandlers
-        )
+        ch = logging.StreamHandler()
+        ch.setFormatter(logFormatter)
 
-        log = logging.getLogger()
+        ssLog.addHandler(ch)
+
+        log = ssLog
 
 
 def cleanup_json(json):
