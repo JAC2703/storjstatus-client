@@ -15,7 +15,7 @@ def setup_env():
 
 
 def get_version():
-    return __version__
+    return version.__version__
 
 
 def cleanup_json(json):

@@ -114,7 +114,8 @@ def checks():
 
 def header():
     print('####################################################')
-    print('#         StorjStatus Server Registration          #')
+    print('          StorjStatus Server Registration')
+    print('#                Version: ' + storjstatus_common.get_version() + )
     print('####################################################')
     print()
 
