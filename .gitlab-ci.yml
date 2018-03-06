@@ -1,0 +1,71 @@
+before_script:
+  - export PATH=$HOME/bin:/usr/local/bin:/usr/bin:/bin:/usr/bin/mvn
+
+variables:
+    PYPY_USERNAME: SECRET
+    PYPY_TEST_PASSWORD: SECRET
+    PYPY_LIVE_PASSWORD: SECRET
+
+
+stages:
+  - set-env
+  - deploy
+  - cleanup
+
+
+set-pypirc:
+  stage: set-env
+  when: always
+  script:
+    - rm -rf ~/.pypirc
+    - echo "[distutils]" >> ~/.pypirc
+    - echo "index-servers=" >> ~/.pypirc
+    - echo "    pypi" >> ~/.pypirc
+    - echo "    pypitest" >> ~/.pypirc
+    - echo "" >> ~/.pypirc
+    - echo "[pypi]" >> ~/.pypirc
+    - echo "username':'$PYPI_USERNAME" >> ~/.pypirc
+    - echo "password':'$PYPI_LIVE_PASSWORD" >> ~/.pypirc
+    - echo "" >> ~/.pypirc
+    - echo "[pypitest]" >> ~/.pypirc
+    - echo "repository':' https://test.pypi.org/legacy/" >> ~/.pypirc
+    - echo "username':'$PYPI_USERNAME" >> ~/.pypirc
+    - echo "password':'$PYPI_TEST_PASSWORD" >> ~/.pypirc
+    - chmod 600 ~/.pypirc
+  tags:
+    - storjapi
+
+
+deploy-test:
+  stage: deploy
+  script:
+    - python setup.py bdist_wheel --universal
+    - echo twine upload --repository pypitest dist/*
+  except:
+    - master
+  tags:
+    - storjapi
+  environment:
+    name: test
+
+
+deploy-production:
+  stage: deploy
+  script:
+    - python setup.py bdist_wheel --universal
+    - echo twine upload --repository pypi dist/*
+  only:
+    - master
+  tags:
+    - storjapi
+  environment:
+    name: production
+
+
+cleanup_pypirc:
+  stage: cleanup
+  when: always
+  script:
+    - rm -rf ~/.pypirc
+  tags:
+    - storjapi
