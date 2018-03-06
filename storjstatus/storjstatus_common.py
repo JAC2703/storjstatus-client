@@ -20,7 +20,7 @@ def get_version():
     return version.__version__
 
 
-def get_log():
+def setup_logger():
     global log
 
     if (log == None):
@@ -32,7 +32,6 @@ def get_log():
         consoleHandler.setFormatter(logFormatter)
         rootLogger.addHandler(consoleHandler)
 
-    return log
 
 def cleanup_json(json):
     json = re.sub(r'(?<!https:)//.*', '', json, flags = re.MULTILINE)
