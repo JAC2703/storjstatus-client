@@ -65,7 +65,7 @@ def init_send():
             }
             json_nodes.append(json_node)
         else:
-            logger.warning("No config file found for Node: %s. Data for this node will not be sent.", node['id'])
+            logging.warning("No config file found for Node: %s. Data for this node will not be sent.", node['id'])
 
     json_request = {
         'serverId': SERVERGUID,
@@ -137,7 +137,7 @@ def config_json():
         for f in filenames:
             # consume config file
             with open(os.path.join(root, f), 'r', encoding = "ISO-8859-1") as f_open:
-                logger.info("Parsing config file: " + os.path.join(root, f))
+                logging.debug("Parsing config file: " + os.path.join(root, f))
                 node = {}
                 f_data = f_open.read()
                 f_clean = storjstatus_common.cleanup_json(f_data)
@@ -151,13 +151,13 @@ def config_json():
                     node['storageAllocation'] = f_json['storageAllocation']
 
                     nodes[f_json['storagePath']] = node
-                    logger.info("Found valid config for " + f_json['storagePath'])
+                    logging.info("Found valid config for " + f_json['storagePath'])
                 except KeyError:
-                    logger.warning('JSON config file ' + f + ' invalid. Please check your config.')
+                    logging.warning('JSON config file ' + f + ' invalid. Please check your config.')
                 except json.JSONDecodeError:
-                    logger.warning('JSON config file ' + f + ' invalid. Please check your config.')
+                    logging.warning('JSON config file ' + f + ' invalid. Please check your config.')
                 except:
-                    logger.warning("File " + f + " is not a valid Storjshare JSON config file")
+                    logging.warning("File " + f + " is not a valid Storjshare JSON config file")
 
     if nodes:
         return nodes
