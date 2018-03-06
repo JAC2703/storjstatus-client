@@ -30,7 +30,7 @@ def setup_logger():
 
         consoleHandler = logging.StreamHandler()
         consoleHandler.setFormatter(logFormatter)
-        rootLogger.addHandler(consoleHandler)
+        log.addHandler(consoleHandler)
 
 
 def cleanup_json(json):
