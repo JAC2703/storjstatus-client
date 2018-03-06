@@ -40,7 +40,7 @@ deploy-test:
   stage: deploy
   script:
     - python setup.py bdist_wheel --universal
-    - echo twine upload --repository pypitest dist/*
+    - twine upload --repository pypitest dist/*
   except:
     - master
   tags:
@@ -53,7 +53,7 @@ deploy-production:
   stage: deploy
   script:
     - python setup.py bdist_wheel --universal
-    - echo twine upload --repository pypi dist/*
+    - twine upload --repository pypi dist/*
   only:
     - master
   tags:
