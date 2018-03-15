@@ -126,7 +126,10 @@ def bridge_info(id):
 def storjshare_json():
     result_data = storjstatus_common.subprocess_result(['storjshare', 'status', '--json'])
 
-    return json.loads(result_data[0].decode('utf-8')) #result_json
+    if result_data[0].decode('utf-8') != '':
+        return json.loads(result_data[0].decode('utf-8')) #result_json
+    else:
+        return []
 
 
 def config_json():
@@ -164,8 +167,6 @@ def config_json():
     else:
         print_error('No valid config files found. Exiting.')
         exit(1)
-
-
 
 
 def load_settings():
