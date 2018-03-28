@@ -170,6 +170,30 @@ def config_json():
 
 
 def load_settings():
+<<<<<<< HEAD
+    if storjstatus_common.get_os_type() == "win":
+        return load_settings_win()
+    elif storjstatus_common.get_os_type() == "linux":
+        return load_settings_linux()
+
+
+def load_settings_win():
+    try:
+        import winreg
+        local_machine = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+        config = winreg.OpenKey(local_machine, storjstatus_common.CONFIGREG)
+
+        APIKEY = winreg.QueryValueEx(config, 'api_key')[0]
+        APISECRET = winreg.QueryValueEx(config, 'api_secret')[0]
+        SERVERGUID = winreg.QueryValueEx(config, 'server_guid')[0]
+        STORJCONFIG = winreg.QueryValueEx(config, 'storj_config')[0]
+    except AttributeError:
+        print_error('Error parsing Windows registry. Did you run storjstatus-register?')
+
+
+def load_settings_linux():
+=======
+>>>>>>> c778c9176753976ed977fc2bf64e632f499cdfa3
     global APIKEY
     global APISECRET
     global SERVERGUID

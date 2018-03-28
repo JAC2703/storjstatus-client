@@ -11,12 +11,14 @@ stages:
   - set-env
   - deploy
   - cleanup
+  - db
 
 
 set-pypirc:
   stage: set-env
   when: always
   script:
+    - pip3 install crate
     - rm -rf ~/.pypirc
     - echo "[distutils]" >> ~/.pypirc
     - echo "index-servers=" >> ~/.pypirc
@@ -67,5 +69,14 @@ cleanup_pypirc:
   when: always
   script:
     - rm -rf ~/.pypirc
+  tags:
+    - storjapi
+
+update_db:
+  stage: db
+  only:
+    - master
+  script:
+    - python3 update-db.py
   tags:
     - storjapi

@@ -7,6 +7,7 @@ import logging
 
 
 CONFIGFILE = '/etc/storjstatus/config.json'
+CONFIGREG = 'Software\StorjStatus\StorjStatusClient\config'
 APIENDPOINT = 'https://www.storjstatus.com/api/'
 log = None
 
@@ -40,6 +41,14 @@ def setup_logger():
         log = ssLog
 
 
+def get_os_type():
+    if (os.name == "posix"):
+        return ""
+    elif (os.name == "nt"):
+        return "win"
+    else:
+        return "x"
+
 def cleanup_json(json):
     json = re.sub(r'(?<!https:)//.*', '', json, flags = re.MULTILINE)
     json = json.strip().replace('\r', '').replace('\n', '')
@@ -48,6 +57,20 @@ def cleanup_json(json):
 
 
 def check_strojshare():
+    if get_os_type() == "win":
+        return check_strojshare_win()
+
+    elif get_os_type() == "linux":
+        return check_strojshare_linux()
+
+
+def check_strojshare_win():
+    result = subprocess_result(['storjshare', '-V'])
+    print(result[0].decode('utf-8').strip())
+    return "OK", result[0].decode('utf-8').strip()
+
+
+def check_strojshare_linux():
     result = subprocess_result(['which', 'storjshare'])
     if 'storjshare' in result[0].decode('utf-8'):
         try:
