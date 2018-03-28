@@ -126,7 +126,10 @@ def bridge_info(id):
 def storjshare_json():
     result_data = storjstatus_common.subprocess_result(['storjshare', 'status', '--json'])
 
-    return json.loads(result_data[0].decode('utf-8')) #result_json
+    if result_data[0].decode('utf-8') != '':
+        return json.loads(result_data[0].decode('utf-8')) #result_json
+    else:
+        return []
 
 
 def config_json():
@@ -167,6 +170,7 @@ def config_json():
 
 
 def load_settings():
+<<<<<<< HEAD
     if storjstatus_common.get_os_type() == "win":
         return load_settings_win()
     elif storjstatus_common.get_os_type() == "linux":
@@ -188,6 +192,8 @@ def load_settings_win():
 
 
 def load_settings_linux():
+=======
+>>>>>>> c778c9176753976ed977fc2bf64e632f499cdfa3
     global APIKEY
     global APISECRET
     global SERVERGUID
