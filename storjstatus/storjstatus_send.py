@@ -170,7 +170,6 @@ def config_json():
 
 
 def load_settings():
-<<<<<<< HEAD
     if storjstatus_common.get_os_type() == "win":
         return load_settings_win()
     elif storjstatus_common.get_os_type() == "linux":
@@ -192,8 +191,6 @@ def load_settings_win():
 
 
 def load_settings_linux():
-=======
->>>>>>> c778c9176753976ed977fc2bf64e632f499cdfa3
     global APIKEY
     global APISECRET
     global SERVERGUID
