@@ -43,7 +43,7 @@ def setup_logger():
 
 def get_os_type():
     if (os.name == "posix"):
-        return ""
+        return "linux"
     elif (os.name == "nt"):
         return "win"
     else:
