@@ -8,3 +8,6 @@ def send():
 
 def register():
     storjstatus_register.init_register()
+
+def version():
+    print("StorjStatus Client: " + storjstatus_common.get_version())

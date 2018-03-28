@@ -4,8 +4,10 @@ import argparse
 import getpass
 import json
 import os
+from os.path import expanduser
 import requests
 import socket
+import ctypes
 from crontab import CronTab
 from os import scandir
 from random import randint
@@ -48,34 +50,34 @@ def init_register():
         name = name or guess_hostname()
     else:
         name = args.arg_name
-        print('Using server name :' + name)
+        print('Using server name :' + name + '.')
 
     if not args.arg_config_dir:
         config_dir = input('Enter your Storjshare config directory [' + guess_config_dir() + ']: ')
         config_dir = config_dir or guess_config_dir()
     else:
         config_dir = args.arg_config_dir
-        print('Using config directory :' + config_dir)
+        print('Using config directory :' + config_dir + '.')
 
     # Final check on vars
     if not email or len(email) < 5:
-        print_error('Email address is invalid')
+        print_error('Email address is invalid.')
 
     if not password or len(password) < 6:
-        print_error('Password is invalid')
+        print_error('Password is invalid.')
 
     if not name or len(name) < 3:
-        print_error('Server name must be at least 3 characters')
+        print_error('Server name must be at least 3 characters.')
 
     if not config_dir or len(config_dir) < 1:
-        print_error('Config Directory is invalid')
+        print_error('Config Directory is invalid.')
 
     if not os.path.isdir(config_dir):
-        print_error('Config Directory does not exist or is not a directory')
+        print_error('Config Directory does not exist or is not a directory.')
 
     path, dirs, files = os.walk(config_dir).__next__()
     if (len(files) < 1):
-        print_error('Unable to find any files in the Config Directory')
+        print_error('Unable to find any files in the Config Directory.')
 
     # Get api creds
     key, secret = api_creds(email, password)
@@ -89,24 +91,38 @@ def init_register():
     cron_job()
 
     print()
-    print("Setup complete. You will see your statistics appear on your dashboard over the next hour")
+    print("Setup complete. You will see your statistics appear on your dashboard over the next 30 mins.")
 
 
 def checks():
     global FORCE
 
-    if os.geteuid() != 0:
-        print_error('Please run this script with root privileges')
+    if storjstatus_common.get_os_type() == "x":
+        print_error('Unsupported Os type.')
+
+    try:
+        if os.geteuid() != 0:
+            print_error('Please run this script with root privileges.')
+    except AttributeError:
+        pass
+    try:
+        if  ctypes.windll.shell32.IsUserAnAdmin() != 1:
+            print_error('Please run this script with Administrator privileges.')
+    except AttributeError:
+        print_error('Error checking user access level.')
 
     if FORCE == True:
         print("Forcing regeneration of config and crontab. Note cron times may change.")
 
     elif os.path.isfile(storjstatus_common.CONFIGFILE):
-        print_error('Server config file already exists')
+        print_error('Server config file already exists.')
         exit(1)
 
     # Check strojshare exists
-    code, result = storjstatus_common.check_strojshare()
+    try:
+        code, result = storjstatus_common.check_strojshare()
+    except FileNotFoundError:
+        print_error("Unable to find the Storj Share Daemon. Please ensure it's on your PATH variable.")
 
     if code != "OK":
         print_error(result, False)
@@ -114,8 +130,8 @@ def checks():
 
 def header():
     print('####################################################')
-    print('          StorjStatus Server Registration')
-    print('#                Version: ' + storjstatus_common.get_version())
+    print('         StorjStatus Server Registration')
+    print('                Version: ' + storjstatus_common.get_version())
     print('####################################################')
     print()
 
@@ -133,17 +149,29 @@ def cmdargs():
 
 def guess_config_dir():
     user = getpass.getuser()
-    if user == 'root':
-        return '/root/.config/storjshare/configs'
 
-    else:
-        return '/home/' + user + '/.config/storjshare/configs'
+    if storjstatus_common.get_os_type() == "win":
+        return expanduser("~") + '.storjshare\configs'
+
+    elif storjstatus_common.get_os_type() == "linux":
+        if user == 'root':
+            return '/root/.config/storjshare/configs'
+        else:
+            return '/home/' + user + '/.config/storjshare/configs'
 
 
 def guess_hostname():
     return socket.gethostname()
 
+
 def save_settings(api_key, api_secret, server_guid, storj_config):
+    if storjstatus_common.get_os_type() == "win":
+        save_settings_win(api_key, api_secret, server_guid, storj_config)
+    elif storjstatus_common.get_os_type() == "linux":
+        save_settings_linux(api_key, api_secret, server_guid, storj_config)
+
+
+def save_settings_linux(api_key, api_secret, server_guid, storj_config):
     settings = {
         'api_key': api_key,
         'api_secret': api_secret,
@@ -165,6 +193,20 @@ def save_settings(api_key, api_secret, server_guid, storj_config):
     settings_file = open(storjstatus_common.CONFIGFILE, 'w')
     settings_file.write(settings_output)
     settings_file.close()
+
+
+def save_settings_win(api_key, api_secret, server_guid, storj_config):
+    try:
+        import winreg
+        local_machine = winreg.ConnectRegistry(None, winreg.HKEY_LOCAL_MACHINE)
+        config = winreg.OpenKey(local_machine, storjstatus_common.CONFIGREG)
+
+        winreg.SetValueEx(config, "api_key", 0, winreg.REG_SZ, api_key)
+        winreg.SetValueEx(config, "api_secret", 0, winreg.REG_SZ, api_secret)
+        winreg.SetValueEx(config, "server_guid", 0, winreg.REG_SZ, server_guid)
+        winreg.SetValueEx(config, "storj_config", 0, winreg.REG_SZ, storj_config)
+    except AttributeError:
+        print_error("There was a problem writing to the Windows Registry")
 
 
 def api_creds(email, password):
@@ -203,6 +245,16 @@ def server_guid(key, secret, name):
 
 
 def cron_job():
+    if storjstatus_common.get_os_type() == "win":
+        print()
+        print('************* Windows scheduling unsupported ************')
+        print()
+        print('Please set up a manual schedule for "storjstatus-send" every 15 minutes.')
+
+    elif storjstatus_common.get_os_type() == "linux":
+        cron_job_linux()
+
+def cron_job_linux():
     result = storjstatus_common.subprocess_result(['which', 'storjstatus-send'])
 
     if 'storjstatus-send' in result[0].decode('utf-8'):

@@ -26,7 +26,8 @@ setup(name='storjstatus',
       entry_points={
           'console_scripts': [
               'storjstatus-register=storjstatus:register',
-              'storjstatus-send=storjstatus:send'
+              'storjstatus-send=storjstatus:send',
+              'storjstatus-version=storjstatus:version'
           ]
       }
  )
