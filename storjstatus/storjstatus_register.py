@@ -97,19 +97,20 @@ def init_register():
 def checks():
     global FORCE
 
-    if storjstatus_common.get_os_type() == "x":
+    if storjstatus_common.get_os_type() == "linux":
+        try:
+            if os.geteuid() != 0:
+                print_error('Please run this script with root privileges.')
+        except AttributeError:
+            print_error('Error checking user access level.')
+    elif storjstatus_common.get_os_type() == "win":
+        try:
+            if  ctypes.windll.shell32.IsUserAnAdmin() != 1:
+                print_error('Please run this script with Administrator privileges.')
+        except AttributeError:
+            print_error('Error checking user access level.')
+    else:
         print_error('Unsupported Os type.')
-
-    try:
-        if os.geteuid() != 0:
-            print_error('Please run this script with root privileges.')
-    except AttributeError:
-        pass
-    try:
-        if  ctypes.windll.shell32.IsUserAnAdmin() != 1:
-            print_error('Please run this script with Administrator privileges.')
-    except AttributeError:
-        print_error('Error checking user access level.')
 
     if FORCE == True:
         print("Forcing regeneration of config and crontab. Note cron times may change.")
