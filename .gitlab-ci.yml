@@ -12,6 +12,7 @@ stages:
   - deploy
   - cleanup
   - db
+  - github
 
 
 set-pypirc:
@@ -78,5 +79,15 @@ update_db:
     - master
   script:
     - python3 update-db.py
+  tags:
+    - storjapi
+
+update_github:
+  stage: github
+  only:
+    - master
+  script:
+    - git remote add github git@github.com:JAC2703/storjstatus-client.git
+    - git push github master
   tags:
     - storjapi

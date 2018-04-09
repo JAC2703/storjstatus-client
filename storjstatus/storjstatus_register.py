@@ -4,7 +4,7 @@ import argparse
 import getpass
 import json
 import os
-from os.path import expanduser
+import os.path
 import requests
 import socket
 import ctypes
@@ -256,12 +256,21 @@ def cron_job():
         cron_job_linux()
 
 def cron_job_linux():
+    tmp_cron = '/tmp/storjstatus.cron'
+
     result = storjstatus_common.subprocess_result(['which', 'storjstatus-send'])
 
     if 'storjstatus-send' in result[0].decode('utf-8'):
         send_command = result[0].decode('utf-8').replace('\n', '') + ' >> /var/log/storjstatus.log 2>&1'
 
-        cron = CronTab(tabfile='/etc/crontab', user=False)
+        if os.path.isfile('/etc/crontab'):
+            cron_path = '/etc/crontab'
+        elif os.path.isfile('/etc/anacrontab'):
+            cron_path = '/etc/anacrontab'
+        else:
+            cron_path = tmp_cron
+
+        cron = CronTab(tabfile=cron_path, user=False)
         # Check for existing cronjob and remove
         cron.remove_all(comment='storjstatus')
 
@@ -279,12 +288,11 @@ def cron_job_linux():
         minute = cron_minute(minute)
         job.minute.also.on(minute)
 
-        try:
-            cron.write()
-            storjstatus_common.subprocess_result(['service', 'cron', 'reload'])
-            print("Cron set for: " + job.render())
-        except PermissionError:
-            print_error('Unable to create cron job. Exiting.')
+        if cron_path == tmp_cron:
+            print('*************************WARNING************************************')
+            print('Could not find your system cronfile, please add a cron manually for:')
+            print('             ' + job.render())
+            print('*************************WARNING************************************')
 
     else:
         print_error('There was an error finding the storjstatus-send command. Check your storjstatus installation.')
