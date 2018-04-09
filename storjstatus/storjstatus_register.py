@@ -288,7 +288,7 @@ def cron_job_linux():
         minute = cron_minute(minute)
         job.minute.also.on(minute)
 
-        if cron_path = tmp_cron:
+        if cron_path == tmp_cron:
             print('*************************WARNING************************************')
             print('Could not find your system cronfile, please add a cron manually for:')
             print('             ' + job.render())
