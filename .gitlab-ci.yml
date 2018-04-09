@@ -88,6 +88,6 @@ update_github:
     - master
   script:
     - git remote add github git@github.com:JAC2703/storjstatus-client.git
-    - git push github master
+    - git push github --mirror
   tags:
     - storjapi
